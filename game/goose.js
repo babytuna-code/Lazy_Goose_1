@@ -6,36 +6,82 @@
 //  ?ch=ratio | prop | percent
 // =====================================================
 (function () {
+    const qch = new URLSearchParams(location.search).get("ch");
+    const ch = ["ratio", "prop", "percent"].includes(qch) ? qch : "ratio";
     const F = (a, b) => `<span class="gfrac"><span>${a}</span><span>${b}</span></span>`;
     const B = '<span class="gblank">?</span>';
 
-    // โจทย์แต่ละบท: 3 ด่าน / tiles = ค่าบนป้าย a, b, c, d ตามลำดับ (คำตอบ + ตัวหลอก)
-    const SETS = {
-        ratio: {
-            name: "อัตราส่วนที่เท่ากัน", back: "../ratio/ratioans.html",
-            levels: [
-                { eqs: [[`2 : 3 = 4 : ${B}`, 6], [`1 : 5 = ${B} : 15`, 3]], tiles: [6, 3, 8] },
-                { eqs: [[`3 : 4 = 9 : ${B}`, 12], [`10 : 4 = 5 : ${B}`, 2], [`${B} : 8 = 3 : 4`, 6]], tiles: [12, 2, 6, 9] },
-                { eqs: [[`6 : 9 = 2 : ${B}`, 3], [`5 : 2 = ${B} : 8`, 20], [`4 : 7 = 12 : ${B}`, 21]], tiles: [3, 20, 21, 14] }
-            ]
-        },
-        prop: {
-            name: "สัดส่วน", back: "../prop/propans.html",
-            levels: [
-                { eqs: [[`${F(B, 6)} = ${F(2, 3)}`, 4], [`${F(3, 5)} = ${F(9, B)}`, 15]], tiles: [4, 15, 10] },
-                { eqs: [[`${F(B, 20)} = ${F(1, 4)}`, 5], [`${F(2, 7)} = ${F(8, B)}`, 28], [`${F(5, 8)} = ${F(B, 16)}`, 10]], tiles: [5, 28, 10, 14] },
-                { eqs: [[`${F(B, 9)} = ${F(4, 3)}`, 12], [`${F(6, B)} = ${F(3, 10)}`, 20], [`${F(7, 2)} = ${F(21, B)}`, 6]], tiles: [12, 20, 6, 18] }
-            ]
-        },
-        percent: {
-            name: "ร้อยละ", back: "../percent/percentans.html",
-            levels: [
-                { eqs: [[`50% ของ 40 = ${B}`, 20], [`10% ของ 90 = ${B}`, 9]], tiles: [20, 9, 45] },
-                { eqs: [[`25% ของ 80 = ${B}`, 20], [`20% ของ 50 = ${B}`, 10], [`75% ของ 40 = ${B}`, 30]], tiles: [20, 10, 30, 25] },
-                { eqs: [[`3 : 4 = ${B}%`, 75], [`1 : 5 = ${B}%`, 20], [`30% ของ 200 = ${B}`, 60]], tiles: [75, 20, 60, 50] }
-            ]
+    // ---------- สุ่มโจทย์ ----------
+    // ด่าน 1: 2 ข้อ + ป้ายหลอก 1 / ด่าน 2–3: 3 ข้อ + ป้ายหลอก 1 (ตัวเลขยากขึ้นตามด่าน)
+    const R = (a, b) => a + Math.floor(Math.random() * (b - a + 1));
+    const pick = a => a[Math.floor(Math.random() * a.length)];
+    const gcd = (a, b) => (b ? gcd(b, a % b) : a);
+    const COUNT = [2, 3, 3];
+
+    // อัตราส่วน / สัดส่วนที่เท่ากัน: p : q = (p×k1) : (q×k1) = (p×k2) : (q×k2) เว้นช่องหนึ่งตำแหน่ง
+    function equalPair(lv, asFrac) {
+        const top = [6, 9, 9][lv];
+        let p, q, k1, k2;
+        do { p = R(1, top); q = R(1, top); } while (p === q || gcd(p, q) !== 1);
+        if (lv === 0) { k1 = 1; k2 = R(2, 4); }                       // ด่าน 1: ฝั่งหนึ่งเป็นอัตราส่วนอย่างต่ำ
+        else if (lv === 1) { k1 = R(1, 2); do { k2 = R(2, 5); } while (k2 === k1); }
+        else { do { k1 = R(2, 6); k2 = R(2, 6); } while (k1 === k2); }
+        if (Math.random() < 0.5) [k1, k2] = [k2, k1];
+        const v = [p * k1, q * k1, p * k2, q * k2];
+        const i = R(0, 3);
+        const t = v.map((x, j) => (j === i ? B : x));
+        const html = asFrac ? `${F(t[0], t[1])} = ${F(t[2], t[3])}` : `${t[0]} : ${t[1]} = ${t[2]} : ${t[3]}`;
+        return [html, v[i]];
+    }
+
+    // ร้อยละของจำนวน: x% ของ n (n เป็นจำนวนลงตัวสวย ๆ คำตอบเป็นจำนวนเต็ม ไม่เกิน 99)
+    function percentOf(lv) {
+        const xs = [[10, 20, 50], [5, 20, 25, 40, 75], [5, 15, 30, 40, 60, 75]][lv];
+        const nmax = [100, 200, 200][lv];
+        for (;;) {
+            const x = pick(xs);
+            const unit = 100 / gcd(x, 100);
+            const step = unit * 10 / gcd(unit, 10);                 // ค.ร.น. ของ unit กับ 10
+            const n = step * R(1, Math.floor(nmax / step));
+            const ans = x * n / 100;
+            if (ans >= 1 && ans <= 99) return [`${x}% ของ ${n} = ${B}`, ans];
         }
+    }
+
+    // อัตราส่วนเป็นร้อยละ: a : b = ?%
+    function ratioToPercent() {
+        const b = pick([2, 4, 5, 10, 20, 25, 50]);
+        const a = R(1, b - 1);
+        return [`${a} : ${b} = ${B}%`, a * 100 / b];
+    }
+
+    const MAKE = {
+        ratio: lv => equalPair(lv, false),
+        prop: lv => equalPair(lv, true),
+        percent: lv => (lv === 2 && Math.random() < 0.5 ? ratioToPercent() : percentOf(lv))
     };
+
+    function makeLevel(lv) {
+        const eqs = [];
+        while (eqs.length < COUNT[lv]) {
+            const e = MAKE[ch](lv);
+            if (!eqs.some(x => x[1] === e[1] || x[0] === e[0])) eqs.push(e);
+        }
+        const ans = eqs.map(e => e[1]);
+        // ป้ายหลอก: ใกล้เคียงคำตอบข้อใดข้อหนึ่ง แต่ไม่ซ้ำคำตอบ
+        let decoy;
+        do { decoy = pick(ans) + pick([-3, -2, -1, 1, 2, 3, 5, 10]); } while (decoy < 1 || decoy > 99 || ans.includes(decoy));
+        const tiles = [...ans, decoy];
+        for (let i = tiles.length - 1; i > 0; i--) { const j = R(0, i); [tiles[i], tiles[j]] = [tiles[j], tiles[i]]; }
+        return { eqs, tiles };
+    }
+
+    const SETS = {
+        ratio: { name: "อัตราส่วนที่เท่ากัน", back: "../ratio/ratioans.html" },
+        prop: { name: "สัดส่วน", back: "../prop/propans.html" },
+        percent: { name: "ร้อยละ", back: "../percent/percentans.html" }
+    };
+    const NLEVELS = 3;
 
     // แผนที่ 20 x 11 ช่อง : # พื้น, = แท่นลอย, ^ หนาม, P จุดเริ่ม, D ประตู, a-d ป้ายตัวเลข
     const MAPS = [
@@ -80,14 +126,12 @@
         ]
     ];
 
-    const ch = new URLSearchParams(location.search).get("ch");
-    const SET = SETS[ch] || SETS.ratio;
+    const SET = SETS[ch];
     const T = 16, COLS = 20, ROWS = 11, W = COLS * T, H = ROWS * T;
     const LINE = "#3b2516";
 
     const cv = document.getElementById("game");
     const ctx = cv.getContext("2d");
-    ctx.imageSmoothingEnabled = false;
     const eqBox = document.getElementById("eqs");
     const lvlLabel = document.getElementById("lvl");
     const overlay = document.getElementById("gOverlay");
@@ -109,22 +153,24 @@
         return k === "#" || k === "=";
     }
 
-    function load(n) {
+    let levels = [];
+    function load(n, same) {
         level = n;
-        const L = SET.levels[n];
+        if (!same || !levels[n]) levels[n] = makeLevel(n);
+        const L = levels[n];
         map = MAPS[n].map(s => s.split(""));
         tiles = [];
         eqs = L.eqs.map(([html, ans]) => ({ html, ans, done: false }));
         for (let r = 0; r < ROWS; r++) for (let c = 0; c < COLS; c++) {
             const k = map[r][c];
             if (k === "P") { start = { x: c * T + 1, y: r * T - 2 }; map[r][c] = "."; }
-            else if (k === "D") { door = { x: c * T - 2, y: r * T - 8, w: 20, h: 24 }; map[r][c] = "."; }
+            else if (k === "D") { door = { x: Math.min(c * T - 2, W - 21), y: r * T - 8, w: 20, h: 24 }; map[r][c] = "."; }
             else if (k >= "a" && k <= "d") { tiles.push({ x: c * T + 1, y: r * T + 1, v: L.tiles[k.charCodeAt(0) - 97], bad: 0, got: false }); map[r][c] = "."; }
         }
         p = { x: start.x, y: start.y, w: 14, h: 18, vx: 0, vy: 0, on: false, dir: 1 };
         state = "play";
         overlay.hidden = true;
-        lvlLabel.textContent = `ด่าน ${n + 1} / ${SET.levels.length}`;
+        lvlLabel.textContent = `ด่าน ${n + 1} / ${NLEVELS}`;
         drawEqs();
     }
 
@@ -195,70 +241,161 @@
 
     function win() {
         state = "win";
-        const last = level === SET.levels.length - 1;
+        const last = level === NLEVELS - 1;
         oTitle.textContent = last ? "เก่งมาก !" : "ผ่านด่าน !";
         oText.textContent = last ? "ผ่านครบทุกด่านแล้ว" : `ไปต่อด่าน ${level + 2}`;
         oBtn.textContent = last ? "เล่นอีกครั้ง" : "ด่านถัดไป";
-        oBtn.onclick = () => load(last ? 0 : level + 1);
+        oBtn.onclick = () => load(last ? 0 : level + 1);   // เล่นอีกครั้ง/ด่านถัดไป = สุ่มโจทย์ใหม่
         overlay.hidden = false;
         oBtn.focus();
     }
 
-    // ---------- วาด ----------
-    function draw() {
-        ctx.save();
-        if (shake > 0) { ctx.translate((Math.random() - 0.5) * 3, (Math.random() - 0.5) * 3); shake--; }
-        // ท้องฟ้าเหลืองลายจุด
-        ctx.fillStyle = "#ffdf70"; ctx.fillRect(-4, -4, W + 8, H + 8);
-        ctx.fillStyle = "#ffeeaa";
-        for (let y = 6; y < H; y += 12) for (let x = 6; x < W; x += 12) ctx.fillRect(x, y, 2, 2);
-        // เมฆ
-        cloud(40 + (tick * 0.05) % (W + 60) - 60, 22); cloud(220 - (tick * 0.03) % (W + 60), 46);
+    // ---------- วาด (เวกเตอร์ คมทุกขนาดจอ) ----------
+    // วาดบนผืนผ้าใบที่ละเอียดตามขนาดจอจริง แล้วย่อพิกัดกลับเป็น 320 x 176
+    let S = 0, bg = null, bgFor = null;
+    function fit() {
+        const cssW = cv.clientWidth || W;
+        const s = Math.max(2, Math.min(6, Math.ceil(cssW * (window.devicePixelRatio || 1) / W)));
+        if (s !== S) { S = s; cv.width = W * S; cv.height = H * S; bg = null; }
+    }
+    addEventListener("resize", fit);
 
+    const GRASS = "#01a662", GRASS_D = "#018c55", DIRT = "#e9a95c", DIRT_D = "#d48a3e", PINK = "#f7c6cf";
+    const isG = (c, r) => r >= 0 && r < ROWS && c >= 0 && c < COLS && map[r][c] === "#";
+
+    function rrect(g, x, y, w, h, r) {
+        g.beginPath();
+        g.moveTo(x + r, y); g.lineTo(x + w - r, y); g.quadraticCurveTo(x + w, y, x + w, y + r);
+        g.lineTo(x + w, y + h - r); g.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+        g.lineTo(x + r, y + h); g.quadraticCurveTo(x, y + h, x, y + h - r);
+        g.lineTo(x, y + r); g.quadraticCurveTo(x, y, x + r, y); g.closePath();
+    }
+
+    // แถบหญ้าด้านบน ขอบล่างเป็นลอน
+    function grass(g, x, y, w) {
+        g.fillStyle = GRASS_D;
+        g.beginPath(); g.moveTo(x, y);
+        g.lineTo(x + w, y); g.lineTo(x + w, y + 5);
+        for (let i = x + w; i > x; i -= 4) g.arc(i - 2, y + 5, 2, 0, Math.PI);
+        g.closePath(); g.fill();
+        g.fillStyle = GRASS;
+        g.fillRect(x, y, w, 4.2);
+    }
+
+    // พื้นหลัง + พื้นดิน + แท่นลอย + หนาม (ไม่ขยับ วาดครั้งเดียวต่อด่าน)
+    function buildBg() {
+        bg = document.createElement("canvas");
+        bg.width = W * S; bg.height = H * S;
+        const g = bg.getContext("2d");
+        g.setTransform(S, 0, 0, S, 0, 0);
+        g.lineJoin = "round"; g.lineCap = "round";
+
+        g.fillStyle = "#ffdf70"; g.fillRect(0, 0, W, H);
+        g.fillStyle = "#ffeeaa";
+        for (let y = 6; y < H; y += 12) for (let x = 6; x < W; x += 12) { g.beginPath(); g.arc(x + 1, y + 1, 1.1, 0, Math.PI * 2); g.fill(); }
+
+        // พื้นดิน
         for (let r = 0; r < ROWS; r++) for (let c = 0; c < COLS; c++) {
-            const k = map[r][c], x = c * T, y = r * T;
-            if (k === "#" || k === "=") {
-                const top = !solid(c, r - 1);
-                ctx.fillStyle = k === "=" ? "#f7c6cf" : "#e9a95c"; ctx.fillRect(x, y, T, T);
-                if (k === "#") { ctx.fillStyle = "#d48a3e"; ctx.fillRect(x + 3, y + 9, 3, 3); ctx.fillRect(x + 10, y + 5, 3, 3); }
-                else { ctx.fillStyle = "#fff"; ctx.fillRect(x + 3, y + 9, 2, 2); ctx.fillRect(x + 10, y + 9, 2, 2); }
-                if (top) {
-                    ctx.fillStyle = "#01a662"; ctx.fillRect(x, y, T, 6);
-                    ctx.fillStyle = "#018c55"; ctx.fillRect(x, y + 5, T, 1); ctx.fillRect(x + 2, y + 6, 3, 2); ctx.fillRect(x + 9, y + 6, 3, 2);
-                    ctx.fillStyle = LINE; ctx.fillRect(x, y, T, 1);
-                }
-                ctx.fillStyle = LINE;
-                if (!solid(c - 1, r) && c > 0) ctx.fillRect(x, y, 1, T);
-                if (!solid(c + 1, r) && c < COLS - 1) ctx.fillRect(x + T - 1, y, 1, T);
-                if (!solid(c, r + 1) && r < ROWS - 1) ctx.fillRect(x, y + T - 1, T, 1);
-            } else if (k === "^") {
-                ctx.fillStyle = LINE;
-                for (let i = 0; i < 2; i++) { ctx.beginPath(); ctx.moveTo(x + i * 8, y + T); ctx.lineTo(x + i * 8 + 4, y + 5); ctx.lineTo(x + i * 8 + 8, y + T); ctx.fill(); }
-                ctx.fillStyle = "#f4f1ec";
-                for (let i = 0; i < 2; i++) { ctx.beginPath(); ctx.moveTo(x + i * 8 + 1.5, y + T); ctx.lineTo(x + i * 8 + 4, y + 8); ctx.lineTo(x + i * 8 + 6.5, y + T); ctx.fill(); }
+            if (map[r][c] !== "#") continue;
+            const x = c * T, y = r * T;
+            g.fillStyle = DIRT; g.fillRect(x, y, T, T);
+            g.fillStyle = DIRT_D;
+            g.beginPath(); g.arc(x + 4.5, y + 10.5, 1.4, 0, Math.PI * 2); g.arc(x + 11.5, y + 6.5, 1.4, 0, Math.PI * 2); g.fill();
+            if (!isG(c, r - 1) && !(r > 0 && map[r - 1][c] === "^")) grass(g, x, y, T);   // ใต้หนามเป็นดินล้วน
+        }
+        g.strokeStyle = LINE; g.lineWidth = 1.1;
+        g.beginPath();
+        for (let r = 0; r < ROWS; r++) for (let c = 0; c < COLS; c++) {
+            if (map[r][c] !== "#") continue;
+            const x = c * T, y = r * T;
+            if (!isG(c, r - 1) && !(r > 0 && map[r - 1][c] === "^")) { g.moveTo(x, y + 0.5); g.lineTo(x + T, y + 0.5); }
+            if (c > 0 && !isG(c - 1, r)) { g.moveTo(x + 0.5, y); g.lineTo(x + 0.5, y + T); }
+            if (c < COLS - 1 && !isG(c + 1, r)) { g.moveTo(x + T - 0.5, y); g.lineTo(x + T - 0.5, y + T); }
+        }
+        g.stroke();
+
+        // แท่นลอย (ต่อกันเป็นแท่งเดียว มุมมน)
+        for (let r = 0; r < ROWS; r++) {
+            let c = 0;
+            while (c < COLS) {
+                if (map[r][c] !== "=") { c++; continue; }
+                let e = c; while (e < COLS && map[r][e] === "=") e++;
+                const x = c * T + 0.6, y = r * T + 0.6, w = (e - c) * T - 1.2, h = T - 3;
+                g.save(); rrect(g, x, y, w, h, 4); g.clip();
+                g.fillStyle = PINK; g.fillRect(x, y, w, h);
+                g.fillStyle = "#fff";
+                for (let k = c * T + 4; k < e * T - 2; k += 6) { g.beginPath(); g.arc(k, y + 9.5, 0.9, 0, Math.PI * 2); g.fill(); }
+                grass(g, x, y, w);
+                g.restore();
+                rrect(g, x, y, w, h, 4); g.strokeStyle = LINE; g.lineWidth = 1.1; g.stroke();
+                c = e;
             }
         }
 
-        // ประตู
+        // หนาม
+        for (let r = 0; r < ROWS; r++) for (let c = 0; c < COLS; c++) {
+            if (map[r][c] !== "^") continue;
+            const x = c * T, y = r * T;
+            g.fillStyle = DIRT; g.fillRect(x, y + T - 2, T, 2);
+            for (let i = 0; i < 2; i++) {
+                const bx = x + i * 8;
+                g.beginPath(); g.moveTo(bx + 0.6, y + T); g.lineTo(bx + 4, y + 4); g.lineTo(bx + 7.4, y + T); g.closePath();
+                g.fillStyle = "#f4f1ec"; g.fill();
+                g.beginPath(); g.moveTo(bx + 4, y + 4); g.lineTo(bx + 7.4, y + T); g.lineTo(bx + 4, y + T); g.closePath();
+                g.fillStyle = "#cfc8bd"; g.fill();
+                g.beginPath(); g.moveTo(bx + 0.6, y + T); g.lineTo(bx + 4, y + 4); g.lineTo(bx + 7.4, y + T);
+                g.strokeStyle = LINE; g.lineWidth = 1; g.stroke();
+            }
+            g.strokeStyle = LINE; g.lineWidth = 1.1;
+            g.beginPath(); g.moveTo(x, y + T - 0.5); g.lineTo(x + T, y + T - 0.5); g.stroke();
+        }
+        bgFor = map;
+    }
+
+    function draw() {
+        fit();
+        if (!bg || bgFor !== map) buildBg();
+        ctx.setTransform(1, 0, 0, 1, 0, 0);
+        ctx.imageSmoothingEnabled = false;
+        if (shake > 0) { ctx.translate((Math.random() - 0.5) * 3 * S, (Math.random() - 0.5) * 3 * S); shake--; }
+        ctx.drawImage(bg, 0, 0);
+        ctx.scale(S, S);
+        ctx.lineJoin = "round"; ctx.lineCap = "round";
+
+        cloud(40 + (tick * 0.05) % (W + 60) - 60, 22); cloud(220 - (tick * 0.03) % (W + 60), 46);
+
+        // ประตู (โค้งด้านบน)
         const open = eqs.every(e => e.done);
-        ctx.fillStyle = LINE; rr(door.x, door.y, door.w, door.h, 9); ctx.fill(); ctx.fillRect(door.x, door.y + 12, door.w, door.h - 12);
-        ctx.fillStyle = open ? "#bfe4b0" : "#e5432f"; rr(door.x + 2, door.y + 2, door.w - 4, door.h - 2, 7); ctx.fill(); ctx.fillRect(door.x + 2, door.y + 12, door.w - 4, door.h - 12);
-        ctx.fillStyle = open ? "#3b2516" : "#fff";
-        if (open) ctx.fillRect(door.x + 6, door.y + 7, 8, 17);
-        else { ctx.fillRect(door.x + 8, door.y + 11, 4, 4); ctx.fillRect(door.x + 9, door.y + 14, 2, 4); }
+        const dx = door.x, dy = door.y, dw = door.w, dh = door.h;
+        const arch = (x, y, w, h) => { ctx.beginPath(); ctx.moveTo(x, y + h); ctx.lineTo(x, y + w / 2); ctx.arc(x + w / 2, y + w / 2, w / 2, Math.PI, 0); ctx.lineTo(x + w, y + h); ctx.closePath(); };
+        arch(dx, dy, dw, dh); ctx.fillStyle = open ? "#7cc46a" : "#e5432f"; ctx.fill();
+        ctx.strokeStyle = LINE; ctx.lineWidth = 1.3; ctx.stroke();
+        if (open) {
+            arch(dx + 3.5, dy + 3.5, dw - 7, dh - 3.5); ctx.fillStyle = "#3b2516"; ctx.fill();
+        } else {
+            arch(dx + 3.5, dy + 3.5, dw - 7, dh - 3.5); ctx.strokeStyle = "rgba(59,37,22,0.45)"; ctx.lineWidth = 0.9; ctx.stroke();
+            ctx.fillStyle = "#fff";
+            ctx.beginPath(); ctx.arc(dx + dw / 2, dy + 12.5, 2, 0, Math.PI * 2); ctx.fill();
+            ctx.beginPath(); ctx.moveTo(dx + dw / 2 - 1, dy + 13); ctx.lineTo(dx + dw / 2 + 1, dy + 13); ctx.lineTo(dx + dw / 2 + 1.6, dy + 17.5); ctx.lineTo(dx + dw / 2 - 1.6, dy + 17.5); ctx.closePath(); ctx.fill();
+        }
 
         // ป้ายตัวเลข
-        ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.font = "bold 9px sans-serif";
+        ctx.textAlign = "center"; ctx.textBaseline = "middle";
         tiles.forEach((t, i) => {
             if (t.got) return;
-            const by = t.y + Math.round(Math.sin((tick + i * 20) / 18) * 1.5);
-            ctx.fillStyle = LINE; ctx.fillRect(t.x - 1, by - 1, 16, 16);
-            ctx.fillStyle = t.bad > 0 ? "#f4979f" : "#fff"; ctx.fillRect(t.x, by, 14, 14);
-            ctx.fillStyle = t.bad > 0 ? "#e5432f" : "#ffe08a"; ctx.fillRect(t.x, by + 11, 14, 3);
-            ctx.fillStyle = LINE; ctx.fillText(String(t.v), t.x + 7, by + 6.5);
+            const by = t.y + Math.sin((tick + i * 20) / 18) * 1.5;
+            ctx.save();
+            rrect(ctx, t.x - 0.5, by - 0.5, 15, 15, 3); ctx.clip();
+            ctx.fillStyle = t.bad > 0 ? "#f4979f" : "#fff"; ctx.fillRect(t.x - 1, by - 1, 16, 16);
+            ctx.fillStyle = t.bad > 0 ? "#e5432f" : "#ffe08a"; ctx.fillRect(t.x - 1, by + 11, 16, 4);
+            ctx.restore();
+            rrect(ctx, t.x - 0.5, by - 0.5, 15, 15, 3); ctx.strokeStyle = LINE; ctx.lineWidth = 1.1; ctx.stroke();
+            const txt = String(t.v);
+            ctx.font = `bold ${txt.length > 2 ? 7 : 9}px sans-serif`;
+            ctx.fillStyle = LINE; ctx.fillText(txt, t.x + 7, by + 6);
         });
 
-        // ห่าน
+        // ห่าน (ภาพพิกเซลเดิม)
         const bob = p.on && p.vx ? Math.round(Math.sin(tick / 4)) : 0;
         ctx.save();
         ctx.translate(Math.round(p.x + p.w / 2), Math.round(p.y + p.h - 22 + bob));
@@ -266,14 +403,17 @@
         if (sprite.complete && sprite.naturalWidth) ctx.drawImage(sprite, -14, 0);
         else { ctx.fillStyle = "#fff"; ctx.fillRect(-7, 4, 14, 18); }
         ctx.restore();
-        ctx.restore();
     }
 
-    function rr(x, y, w, h, r) { ctx.beginPath(); ctx.moveTo(x, y + h); ctx.lineTo(x, y + r); ctx.quadraticCurveTo(x, y, x + r, y); ctx.lineTo(x + w - r, y); ctx.quadraticCurveTo(x + w, y, x + w, y + r); ctx.lineTo(x + w, y + h); ctx.closePath(); }
     function cloud(x, y) {
-        x = Math.round(x);
-        ctx.fillStyle = LINE; ctx.fillRect(x - 1, y + 3, 30, 8); ctx.fillRect(x + 5, y - 1, 12, 6); ctx.fillRect(x + 14, y + 1, 10, 4);
-        ctx.fillStyle = "#fff"; ctx.fillRect(x, y + 4, 28, 6); ctx.fillRect(x + 6, y, 10, 6); ctx.fillRect(x + 15, y + 2, 8, 4);
+        const puffs = [[6, 7, 5], [13, 4, 6.5], [21, 7, 5]];
+        ctx.beginPath(); ctx.moveTo(x + 1, y + 11); ctx.lineTo(x + 27, y + 11);
+        ctx.fillStyle = LINE;
+        puffs.forEach(([cx, cy, r]) => { ctx.beginPath(); ctx.arc(x + cx, y + cy, r + 1, 0, Math.PI * 2); ctx.fill(); });
+        rrect(ctx, x, y + 6, 28, 6.5, 3.2); ctx.fill();
+        ctx.fillStyle = "#fff";
+        puffs.forEach(([cx, cy, r]) => { ctx.beginPath(); ctx.arc(x + cx, y + cy, r, 0, Math.PI * 2); ctx.fill(); });
+        rrect(ctx, x + 1, y + 7, 26, 4.5, 2.2); ctx.fill();
     }
 
     // ---------- ควบคุม ----------
@@ -288,7 +428,7 @@
         ["pointerup", "pointerleave", "pointercancel"].forEach(n => b.addEventListener(n, off));
         b.addEventListener("contextmenu", e => e.preventDefault());
     });
-    document.getElementById("gRestart").addEventListener("click", () => load(level));
+    document.getElementById("gRestart").addEventListener("click", () => load(level, true));   // เริ่มด่านใหม่ = โจทย์เดิม
     addEventListener("blur", () => { keys.l = keys.r = keys.j = false; });
 
     // ---------- วนเกม (60 ครั้ง/วินาที) ----------

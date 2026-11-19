@@ -142,8 +142,6 @@ body.goose-game {
     display: block;
     width: 100%;
     height: auto;
-    image-rendering: pixelated;
-    image-rendering: crisp-edges;
 }
 
 .gg-overlay {
