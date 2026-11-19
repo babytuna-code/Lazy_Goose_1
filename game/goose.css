@@ -268,3 +268,7 @@ body.goose-game {
     .geq { min-width: 0; padding: 0.3em 0.4em; }
     .geq:last-child:nth-child(odd) { grid-column: 1 / -1; justify-self: center; min-width: calc(50% - 4px); box-sizing: border-box; }
 }
+
+/* ลูกศรเป็นรูปวาด (ไม่ใช้ตัวอักษร ◀ ▶ ที่ iPhone แสดงเป็นอีโมจิสีฟ้า) */
+.gg-key { padding: 0; display: grid; place-items: center; }
+.gg-key.jump { display: inline-block; padding: 0 1.3em; }

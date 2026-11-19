@@ -129,9 +129,9 @@
                 <p class="summary-chapter" id="summaryChapter"></p>
                 <div class="guide-content summary-content" id="summaryContent"></div>
                 <div class="summary-nav">
-                    <button type="button" class="summary-arrow" id="summaryPrev" aria-label="บทก่อนหน้า">◀</button>
+                    <button type="button" class="summary-arrow" id="summaryPrev" aria-label="บทก่อนหน้า"><svg viewBox="0 0 20 20" width="0.9em" height="0.9em" aria-hidden="true" style="display:block;margin:auto"><path d="M14 3 L5 10 L14 17 Z" fill="currentColor" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg></button>
                     <span class="summary-dots" id="summaryDots"></span>
-                    <button type="button" class="summary-arrow" id="summaryNext" aria-label="บทถัดไป">▶</button>
+                    <button type="button" class="summary-arrow" id="summaryNext" aria-label="บทถัดไป"><svg viewBox="0 0 20 20" width="0.9em" height="0.9em" aria-hidden="true" style="display:block;margin:auto"><path d="M6 3 L15 10 L6 17 Z" fill="currentColor" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg></button>
                 </div>
                 <div class="guide-footer">
                     <button type="button" class="guide-done" id="summaryDone">ตกลง</button>

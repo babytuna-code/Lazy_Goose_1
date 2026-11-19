@@ -321,6 +321,8 @@ html {
     border-radius: 50%;
     box-shadow: 0 3px #3b2516;
     font-size: 16px;
+    color: #3b2516;
+    padding: 0;
     cursor: pointer;
 }
 
