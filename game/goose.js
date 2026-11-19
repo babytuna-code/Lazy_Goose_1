@@ -240,7 +240,6 @@
     addEventListener("resize", fit);
 
     const GRASS = "#01a662", GRASS_D = "#018c55", DIRT = "#e9a95c", DIRT_D = "#d48a3e", PINK = "#f7c6cf";
-    const isG = (c, r) => r >= 0 && r < ROWS && c >= 0 && c < COLS && map[r][c] === "#";
 
     function rrect(g, x, y, w, h, r) {
         g.beginPath();
@@ -248,17 +247,6 @@
         g.lineTo(x + w, y + h - r); g.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
         g.lineTo(x + r, y + h); g.quadraticCurveTo(x, y + h, x, y + h - r);
         g.lineTo(x, y + r); g.quadraticCurveTo(x, y, x + r, y); g.closePath();
-    }
-
-    // แถบหญ้าด้านบน ขอบล่างเป็นลอน
-    function grass(g, x, y, w) {
-        g.fillStyle = GRASS_D;
-        g.beginPath(); g.moveTo(x, y);
-        g.lineTo(x + w, y); g.lineTo(x + w, y + 5);
-        for (let i = x + w; i > x; i -= 4) g.arc(i - 2, y + 5, 2, 0, Math.PI);
-        g.closePath(); g.fill();
-        g.fillStyle = GRASS;
-        g.fillRect(x, y, w, 4.2);
     }
 
     // พื้นหลัง + พื้นดิน + แท่นลอย + หนาม (ไม่ขยับ วาดครั้งเดียวต่อด่าน)
@@ -269,53 +257,32 @@
         g.setTransform(S, 0, 0, S, 0, 0);
         g.lineJoin = "round"; g.lineCap = "round";
 
+        // พื้นหลัง พื้นดิน แท่นลอย: แบบเดิม (พิกเซล)
         g.fillStyle = "#ffdf70"; g.fillRect(0, 0, W, H);
         g.fillStyle = "#ffeeaa";
-        for (let y = 6; y < H; y += 12) for (let x = 6; x < W; x += 12) { g.beginPath(); g.arc(x + 1, y + 1, 1.1, 0, Math.PI * 2); g.fill(); }
-
-        // พื้นดิน
+        for (let y = 6; y < H; y += 12) for (let x = 6; x < W; x += 12) g.fillRect(x, y, 2, 2);
         for (let r = 0; r < ROWS; r++) for (let c = 0; c < COLS; c++) {
-            if (map[r][c] !== "#") continue;
-            const x = c * T, y = r * T;
-            g.fillStyle = DIRT; g.fillRect(x, y, T, T);
-            g.fillStyle = DIRT_D;
-            g.beginPath(); g.arc(x + 4.5, y + 10.5, 1.4, 0, Math.PI * 2); g.arc(x + 11.5, y + 6.5, 1.4, 0, Math.PI * 2); g.fill();
-            if (!isG(c, r - 1) && !(r > 0 && map[r - 1][c] === "^")) grass(g, x, y, T);   // ใต้หนามเป็นดินล้วน
-        }
-        g.strokeStyle = LINE; g.lineWidth = 1.1;
-        g.beginPath();
-        for (let r = 0; r < ROWS; r++) for (let c = 0; c < COLS; c++) {
-            if (map[r][c] !== "#") continue;
-            const x = c * T, y = r * T;
-            if (!isG(c, r - 1) && !(r > 0 && map[r - 1][c] === "^")) { g.moveTo(x, y + 0.5); g.lineTo(x + T, y + 0.5); }
-            if (c > 0 && !isG(c - 1, r)) { g.moveTo(x + 0.5, y); g.lineTo(x + 0.5, y + T); }
-            if (c < COLS - 1 && !isG(c + 1, r)) { g.moveTo(x + T - 0.5, y); g.lineTo(x + T - 0.5, y + T); }
-        }
-        g.stroke();
-
-        // แท่นลอย (ต่อกันเป็นแท่งเดียว มุมมน)
-        for (let r = 0; r < ROWS; r++) {
-            let c = 0;
-            while (c < COLS) {
-                if (map[r][c] !== "=") { c++; continue; }
-                let e = c; while (e < COLS && map[r][e] === "=") e++;
-                const x = c * T + 0.6, y = r * T + 0.6, w = (e - c) * T - 1.2, h = T - 3;
-                g.save(); rrect(g, x, y, w, h, 4); g.clip();
-                g.fillStyle = PINK; g.fillRect(x, y, w, h);
-                g.fillStyle = "#fff";
-                for (let k = c * T + 4; k < e * T - 2; k += 6) { g.beginPath(); g.arc(k, y + 9.5, 0.9, 0, Math.PI * 2); g.fill(); }
-                grass(g, x, y, w);
-                g.restore();
-                rrect(g, x, y, w, h, 4); g.strokeStyle = LINE; g.lineWidth = 1.1; g.stroke();
-                c = e;
+            const k = map[r][c], x = c * T, y = r * T;
+            if (k !== "#" && k !== "=") continue;
+            const top = !solid(c, r - 1);
+            g.fillStyle = k === "=" ? PINK : DIRT; g.fillRect(x, y, T, T);
+            if (k === "#") { g.fillStyle = DIRT_D; g.fillRect(x + 3, y + 9, 3, 3); g.fillRect(x + 10, y + 5, 3, 3); }
+            else { g.fillStyle = "#fff"; g.fillRect(x + 3, y + 9, 2, 2); g.fillRect(x + 10, y + 9, 2, 2); }
+            if (top) {
+                g.fillStyle = GRASS; g.fillRect(x, y, T, 6);
+                g.fillStyle = GRASS_D; g.fillRect(x, y + 5, T, 1); g.fillRect(x + 2, y + 6, 3, 2); g.fillRect(x + 9, y + 6, 3, 2);
+                g.fillStyle = LINE; g.fillRect(x, y, T, 1);
             }
+            g.fillStyle = LINE;
+            if (!solid(c - 1, r) && c > 0) g.fillRect(x, y, 1, T);
+            if (!solid(c + 1, r) && c < COLS - 1) g.fillRect(x + T - 1, y, 1, T);
+            if (!solid(c, r + 1) && r < ROWS - 1) g.fillRect(x, y + T - 1, T, 1);
         }
 
         // หนาม
         for (let r = 0; r < ROWS; r++) for (let c = 0; c < COLS; c++) {
             if (map[r][c] !== "^") continue;
             const x = c * T, y = r * T;
-            g.fillStyle = DIRT; g.fillRect(x, y + T - 2, T, 2);
             for (let i = 0; i < 2; i++) {
                 const bx = x + i * 8;
                 g.beginPath(); g.moveTo(bx + 0.6, y + T); g.lineTo(bx + 4, y + 4); g.lineTo(bx + 7.4, y + T); g.closePath();
@@ -325,8 +292,6 @@
                 g.beginPath(); g.moveTo(bx + 0.6, y + T); g.lineTo(bx + 4, y + 4); g.lineTo(bx + 7.4, y + T);
                 g.strokeStyle = LINE; g.lineWidth = 1; g.stroke();
             }
-            g.strokeStyle = LINE; g.lineWidth = 1.1;
-            g.beginPath(); g.moveTo(x, y + T - 0.5); g.lineTo(x + T, y + T - 0.5); g.stroke();
         }
         bgFor = map;
     }
@@ -385,14 +350,9 @@
     }
 
     function cloud(x, y) {
-        const puffs = [[6, 7, 5], [13, 4, 6.5], [21, 7, 5]];
-        ctx.beginPath(); ctx.moveTo(x + 1, y + 11); ctx.lineTo(x + 27, y + 11);
-        ctx.fillStyle = LINE;
-        puffs.forEach(([cx, cy, r]) => { ctx.beginPath(); ctx.arc(x + cx, y + cy, r + 1, 0, Math.PI * 2); ctx.fill(); });
-        rrect(ctx, x, y + 6, 28, 6.5, 3.2); ctx.fill();
-        ctx.fillStyle = "#fff";
-        puffs.forEach(([cx, cy, r]) => { ctx.beginPath(); ctx.arc(x + cx, y + cy, r, 0, Math.PI * 2); ctx.fill(); });
-        rrect(ctx, x + 1, y + 7, 26, 4.5, 2.2); ctx.fill();
+        x = Math.round(x);
+        ctx.fillStyle = LINE; ctx.fillRect(x - 1, y + 3, 30, 8); ctx.fillRect(x + 5, y - 1, 12, 6); ctx.fillRect(x + 14, y + 1, 10, 4);
+        ctx.fillStyle = "#fff"; ctx.fillRect(x, y + 4, 28, 6); ctx.fillRect(x + 6, y, 10, 6); ctx.fillRect(x + 15, y + 2, 8, 4);
     }
 
     // ---------- ควบคุม ----------
