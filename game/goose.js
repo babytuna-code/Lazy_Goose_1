@@ -132,6 +132,13 @@
         return k === "#" || k === "=";
     }
 
+    // ชนด้านข้าง/หัว: เฉพาะพื้นดิน (#) — แท่นลอย (=) เดินลอดและกระโดดทะลุขึ้นได้ ยืนได้เฉพาะตอนตกลงมาจากด้านบน
+    function wall(c, r) {
+        if (c < 0 || c >= COLS) return true;
+        if (r < 0 || r >= ROWS) return false;
+        return map[r][c] === "#";
+    }
+
     let levels = [];
     function load(n, same) {
         level = n;
@@ -185,16 +192,18 @@
         p.x += p.vx;
         let c0 = Math.floor(p.x / T), c1 = Math.floor((p.x + p.w - 1) / T), r0 = Math.floor(p.y / T), r1 = Math.floor((p.y + p.h - 1) / T);
         for (let r = r0; r <= r1; r++) {
-            if (p.vx > 0 && solid(c1, r)) p.x = c1 * T - p.w;
-            if (p.vx < 0 && solid(c0, r)) p.x = (c0 + 1) * T;
+            if (p.vx > 0 && wall(c1, r)) p.x = c1 * T - p.w;
+            if (p.vx < 0 && wall(c0, r)) p.x = (c0 + 1) * T;
         }
         // แกน y
+        const prevBottom = p.y + p.h;
         p.y += p.vy;
         p.on = false;
         c0 = Math.floor(p.x / T); c1 = Math.floor((p.x + p.w - 1) / T); r0 = Math.floor(p.y / T); r1 = Math.floor((p.y + p.h - 1) / T);
         for (let c = c0; c <= c1; c++) {
-            if (p.vy > 0 && solid(c, r1)) { p.y = r1 * T - p.h; p.vy = 0; p.on = true; }
-            if (p.vy < 0 && solid(c, r0)) { p.y = (r0 + 1) * T; p.vy = 0; }
+            const land = wall(c, r1) || (r1 >= 0 && r1 < ROWS && map[r1][c] === "=" && prevBottom <= r1 * T + 2);
+            if (p.vy > 0 && land) { p.y = r1 * T - p.h; p.vy = 0; p.on = true; }
+            if (p.vy < 0 && wall(c, r0)) { p.y = (r0 + 1) * T; p.vy = 0; }
         }
         if (p.y > H + 40) respawn();
 
