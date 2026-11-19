@@ -392,7 +392,7 @@
         const next = el("button", "pr-next", "ข้อถัดไป"); next.type = "button"; next.hidden = true;
         const acts = el("div", "pr-actions");                 // ปุ่มตรวจคำตอบ และปุ่มข้อถัดไป อยู่ตำแหน่งเดียวกัน
         acts.append(next);
-        root.append(head, ask, body, acts, fb, star);
+        root.append(ask, body, acts, fb, star);   // ไม่แสดง "ข้อ x / y"
 
         // {ตัวเศษ|ตัวส่วน} → เศษส่วน
         function frac(t) {
