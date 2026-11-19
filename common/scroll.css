@@ -2136,3 +2136,10 @@ html body .lesson-content .box-pair { display: flex !important; flex-direction: 
 html body .lesson-content .box-pair > .box { width: 100%; }
 .card-lead { text-align: center; }
 .card-lead .note { margin: 0; }
+
+/* มือถือ/แท็บเล็ต (Safari บน iPhone): ไม่ใช้ขอบล่างไล่จางในกล่องเลื่อน
+   และแยกแบบฝึกเป็นชั้นของตัวเอง กันเงาปุ่มของข้อก่อนหน้าค้างเป็นเส้นบนจอ */
+@media (pointer: coarse) {
+    html body .lesson-content { -webkit-mask-image: none !important; mask-image: none !important; }
+    html body .practice { transform: translateZ(0); }
+}
