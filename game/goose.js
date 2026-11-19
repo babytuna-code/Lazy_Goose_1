@@ -159,7 +159,7 @@
         eqs.forEach(e => {
             const d = document.createElement("div");
             d.className = "geq" + (e.done ? " done" : "");
-            d.innerHTML = e.done ? e.html.replace('<span class="gblank">?</span>', `<span class="gblank ok">${e.ans}</span>`) + '<span class="gcheck">✓</span>' : e.html;
+            d.innerHTML = e.done ? e.html.replace('<span class="gblank">?</span>', `<span class="gblank ok">${e.ans}</span>`)  : e.html;
             eqBox.appendChild(d);
         });
     }

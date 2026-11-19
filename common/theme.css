@@ -751,3 +751,14 @@ html body:not(.scroll-page) .lesson-content:not(.lg-more) {
     mask-image: none !important;
 }
 
+
+/* มือถือ/แท็บเล็ต (จอสัมผัส): ไม่ใช้ mask ไล่จางบนกล่องที่เลื่อนได้
+   Safari บน iPhone วาดภาพค้างเป็นเส้นเงาปุ่มตกค้าง (ghost) เมื่อเนื้อหาในกล่องที่มี mask เปลี่ยนขนาด */
+@media (hover: none) {
+    html body .lesson-content,
+    html body .lesson-content.scroll-all,
+    html body .lesson-content.lg-more {
+        -webkit-mask-image: none !important;
+        mask-image: none !important;
+    }
+}
