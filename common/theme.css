@@ -53,7 +53,10 @@ html body :is(.menu-btn, .choose-btn):hover {
 
 /* ปุ่มสีเขียว/ปุ่มรอง ในหน้าคะแนน */
 html body .retry-button.answer-button {
-    background-color: #5fb043;
+    background-color: #01a662 !important;   /* เขียวเดียวกับขอบคลื่น */
+}
+html body .retry-button.answer-button:hover {
+    background-color: #018c55 !important;
 }
 
 /* ---------- ปุ่มย้อนกลับ / ถัดไป (ทุกหน้า) ---------- */
@@ -731,15 +734,7 @@ input.number-box:focus { box-shadow: 0 0 0 4px #ffe08a; }
 input.number-box:disabled { opacity: 1; -webkit-text-fill-color: #3b2516; }
 
 
-/* ---------- กรอบโจทย์ในแบบทดสอบทุกแบบ (เกมท้ายบท + แบบทดสอบรวมบท): พื้นขาว ตัวอักษรสีน้ำตาลเข้ม ---------- */
-html body :is(.ask-btn, .ask-btn1, .ask-btn2),
-html body .game-screen:has(.q-counter) .stack > .pill {
-    background-color: #fffaf0 !important;
-    background-image: none !important;
-    color: var(--line) !important;
-    -webkit-text-stroke: 0 !important;
-    text-shadow: none !important;
-}
+/* (ฉบับนำเสนอ) กรอบโจทย์ใช้สีแดง ตัวอักษรขาว แบบเดิม */
 
 /* =====================================================
    เปลี่ยนหน้าแบบลื่น: เบราว์เซอร์ค้างภาพหน้าเดิมไว้จนหน้าใหม่วาดเสร็จ (คลื่น ต้นไม้ เมฆ ครบแล้ว)

@@ -127,7 +127,7 @@
             a.querySelectorAll("button, input").forEach(b => { b.disabled = true; });
         });
         const submit = document.getElementById("submitButton");
-        if (submit) { submit.disabled = true; submit.textContent = r ? "ตอบข้อนี้แล้ว (ถูก)" : "ตอบข้อนี้แล้ว (ผิด)"; }
+        if (submit) { submit.disabled = true; submit.textContent = "ส่งคำตอบแล้ว"; }
         const next = document.getElementById("nextButton");
         if (next) {
             next.hidden = false;
