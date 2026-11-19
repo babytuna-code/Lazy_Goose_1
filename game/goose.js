@@ -11,62 +11,41 @@
     const F = (a, b) => `<span class="gfrac"><span>${a}</span><span>${b}</span></span>`;
     const B = '<span class="gblank">?</span>';
 
-    // ---------- สุ่มโจทย์ ----------
-    // ด่าน 1: 2 ข้อ + ป้ายหลอก 1 / ด่าน 2–3: 3 ข้อ + ป้ายหลอก 1 (ตัวเลขยากขึ้นตามด่าน)
+    // ---------- คลังโจทย์ บทละ 10 ข้อ (ข้อ 1–4 ง่าย ใช้ในด่าน 1) ----------
+    // ด่าน 1: สุ่ม 2 ข้อจากข้อง่าย / ด่าน 2–3: สุ่มข้อละ 3 จากข้อที่เหลือ (ไม่ซ้ำกันในรอบเดียว)
     const R = (a, b) => a + Math.floor(Math.random() * (b - a + 1));
     const pick = a => a[Math.floor(Math.random() * a.length)];
-    const gcd = (a, b) => (b ? gcd(b, a % b) : a);
     const COUNT = [2, 3, 3];
-
-    // อัตราส่วน / สัดส่วนที่เท่ากัน: p : q = (p×k1) : (q×k1) = (p×k2) : (q×k2) เว้นช่องหนึ่งตำแหน่ง
-    function equalPair(lv, asFrac) {
-        const top = [6, 9, 9][lv];
-        let p, q, k1, k2;
-        do { p = R(1, top); q = R(1, top); } while (p === q || gcd(p, q) !== 1);
-        if (lv === 0) { k1 = 1; k2 = R(2, 4); }                       // ด่าน 1: ฝั่งหนึ่งเป็นอัตราส่วนอย่างต่ำ
-        else if (lv === 1) { k1 = R(1, 2); do { k2 = R(2, 5); } while (k2 === k1); }
-        else { do { k1 = R(2, 6); k2 = R(2, 6); } while (k1 === k2); }
-        if (Math.random() < 0.5) [k1, k2] = [k2, k1];
-        const v = [p * k1, q * k1, p * k2, q * k2];
-        const i = R(0, 3);
-        const t = v.map((x, j) => (j === i ? B : x));
-        const html = asFrac ? `${F(t[0], t[1])} = ${F(t[2], t[3])}` : `${t[0]} : ${t[1]} = ${t[2]} : ${t[3]}`;
-        return [html, v[i]];
-    }
-
-    // ร้อยละของจำนวน: x% ของ n (n เป็นจำนวนลงตัวสวย ๆ คำตอบเป็นจำนวนเต็ม ไม่เกิน 99)
-    function percentOf(lv) {
-        const xs = [[10, 20, 50], [5, 20, 25, 40, 75], [5, 15, 30, 40, 60, 75]][lv];
-        const nmax = [100, 200, 200][lv];
-        for (;;) {
-            const x = pick(xs);
-            const unit = 100 / gcd(x, 100);
-            const step = unit * 10 / gcd(unit, 10);                 // ค.ร.น. ของ unit กับ 10
-            const n = step * R(1, Math.floor(nmax / step));
-            const ans = x * n / 100;
-            if (ans >= 1 && ans <= 99) return [`${x}% ของ ${n} = ${B}`, ans];
-        }
-    }
-
-    // อัตราส่วนเป็นร้อยละ: a : b = ?%
-    function ratioToPercent() {
-        const b = pick([2, 4, 5, 10, 20, 25, 50]);
-        const a = R(1, b - 1);
-        return [`${a} : ${b} = ${B}%`, a * 100 / b];
-    }
-
-    const MAKE = {
-        ratio: lv => equalPair(lv, false),
-        prop: lv => equalPair(lv, true),
-        percent: lv => (lv === 2 && Math.random() < 0.5 ? ratioToPercent() : percentOf(lv))
+    const BANK = {
+        ratio: [
+            [`2 : 3 = 4 : ${B}`, 6], [`1 : 5 = ${B} : 15`, 3], [`3 : 4 = 9 : ${B}`, 12], [`10 : 4 = 5 : ${B}`, 2],
+            [`5 : 2 = ${B} : 8`, 20], [`4 : 7 = 12 : ${B}`, 21], [`${B} : 12 = 2 : 3`, 8], [`6 : 9 = ${B} : 15`, 10],
+            [`18 : 24 = 3 : ${B}`, 4], [`9 : 6 = ${B} : 10`, 15]
+        ],
+        prop: [
+            [`${F(B, 6)} = ${F(2, 3)}`, 4], [`${F(3, 5)} = ${F(9, B)}`, 15], [`${F(B, 20)} = ${F(1, 4)}`, 5], [`${F(2, 7)} = ${F(8, B)}`, 28],
+            [`${F(5, 8)} = ${F(B, 16)}`, 10], [`${F(B, 9)} = ${F(4, 3)}`, 12], [`${F(6, B)} = ${F(3, 10)}`, 20], [`${F(7, 2)} = ${F(21, B)}`, 6],
+            [`${F(12, 18)} = ${F(B, 3)}`, 2], [`${F(15, B)} = ${F(5, 6)}`, 18]
+        ],
+        percent: [
+            [`50% ของ 40 = ${B}`, 20], [`10% ของ 90 = ${B}`, 9], [`20% ของ 50 = ${B}`, 10], [`25% ของ 60 = ${B}`, 15],
+            [`75% ของ 40 = ${B}`, 30], [`3 : 4 = ${B}%`, 75], [`2 : 5 = ${B}%`, 40], [`30% ของ 200 = ${B}`, 60],
+            [`5% ของ 160 = ${B}`, 8], [`7 : 20 = ${B}%`, 35]
+        ]
     };
+    const shuffle = a => { for (let i = a.length - 1; i > 0; i--) { const j = R(0, i); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+    let deal = [];
+    function newRun() {
+        const all = BANK[ch].map((e, i) => i);
+        const easy = shuffle(all.slice(0, 4));
+        const first = easy.slice(0, 2);
+        const rest = shuffle(all.filter(i => !first.includes(i))).slice(0, 6);
+        deal = [first, rest.slice(0, 3), rest.slice(3, 6)];
+    }
 
     function makeLevel(lv) {
-        const eqs = [];
-        while (eqs.length < COUNT[lv]) {
-            const e = MAKE[ch](lv);
-            if (!eqs.some(x => x[1] === e[1] || x[0] === e[0])) eqs.push(e);
-        }
+        if (lv === 0 || !deal.length) newRun();
+        const eqs = deal[lv].map(i => BANK[ch][i]);
         const ans = eqs.map(e => e[1]);
         // ป้ายหลอก: ใกล้เคียงคำตอบข้อใดข้อหนึ่ง แต่ไม่ซ้ำคำตอบ
         let decoy;
