@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>Lazy Goose - เกมห่านผจญภัย</title>
+    <link rel="stylesheet" href="../common/fonts.css?v=20261120c">
+    <link rel="stylesheet" href="../common/settings.css?v=20261120c">
+    <link rel="stylesheet" href="../common/wave.css?v=20261120c">
+    <link rel="stylesheet" href="./goose.css?v=20261120c">
+    <link rel="stylesheet" href="../common/theme.css?v=20261120c">
+</head>
+<body class="goose-game">
+    <main class="gg">
+        <header class="gg-top">
+            <button class="gg-btn" id="backBtn" type="button">ย้อนกลับ</button>
+            <div class="gg-title"><span class="gg-name">ห่านผจญภัย</span><span class="gg-sub"><span id="gName"></span> · <span id="lvl"></span></span></div>
+            <button class="gg-btn" id="gRestart" type="button">เริ่มด่านใหม่</button>
+        </header>
+
+        <p class="gg-how">พาห่านไปเก็บป้ายตัวเลขที่เป็นคำตอบให้ครบ แล้วเข้าประตู</p>
+        <div class="gg-eqs" id="eqs" aria-live="polite"></div>
+
+        <div class="gg-stage">
+            <canvas id="game" width="320" height="176" aria-label="เกมห่านผจญภัย"></canvas>
+            <div class="gg-overlay" id="gOverlay" hidden>
+                <div class="gg-pop">
+                    <h2 id="gTitle"></h2>
+                    <p id="gText"></p>
+                    <button class="gg-next" id="gNext" type="button"></button>
+                </div>
+            </div>
+        </div>
+
+        <div class="gg-pad">
+            <div class="gg-move">
+                <button class="gg-key" type="button" data-key="l" aria-label="เดินซ้าย">◀</button>
+                <button class="gg-key" type="button" data-key="r" aria-label="เดินขวา">▶</button>
+            </div>
+            <button class="gg-key jump" type="button" data-key="j" aria-label="กระโดด">กระโดด</button>
+        </div>
+        <p class="gg-keys">คีย์บอร์ด: ← → เดิน · ↑ หรือ Space กระโดด</p>
+    </main>
+
+    <div class="lg-wave bottom" aria-hidden="true">
+        <svg viewBox="0 0 1000 100" preserveAspectRatio="none">
+            <path class="back" d="M0 20 C140 2 300 18 470 34 C650 50 840 12 1000 -6 V160 H0 Z"/>
+            <path class="edge" d="M0 20 C140 2 300 18 470 34 C650 50 840 12 1000 -6"/>
+            <path class="fill" d="M0 40 C150 68 260 90 420 86 C620 80 820 20 1000 4 V160 H0 Z"/>
+            <path class="edge" d="M0 40 C150 68 260 90 420 86 C620 80 820 20 1000 4"/>
+        </svg>
+    </div>
+    <div class="lg-wave top" aria-hidden="true">
+        <svg viewBox="0 0 1000 100" preserveAspectRatio="none">
+            <path class="back" d="M0 -60 H1000 V50 C860 30 700 60 520 84 C360 104 190 112 0 86 Z"/>
+            <path class="edge" d="M0 86 C190 112 360 104 520 84 C700 60 860 30 1000 50"/>
+            <path class="fill" d="M0 -60 H1000 V34 C820 2 620 38 430 74 C300 98 170 102 0 72 Z"/>
+            <path class="edge" d="M0 72 C170 102 300 98 430 74 C620 38 820 2 1000 34"/>
+        </svg>
+    </div>
+
+    <script src="./goose.js?v=20261120c"></script>
+    <script src="../common/theme.js?v=20261120c"></script>
+</body>
+</html>
